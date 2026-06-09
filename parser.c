@@ -273,7 +273,6 @@ int main(void)
         // Get the first token ("MoWe")
         token = strtok(list[i].lecture.time.string, " ");
         days_of_week = token;
-        printf("%s\n", days_of_week);
 
         int k = 0;
         while ((token = strtok(NULL, " -")) != NULL && k < 2)
@@ -324,34 +323,35 @@ int main(void)
         integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
         
         char temp_day_of_week[3];
-        temp_day_of_week[0] = days_of_week[0];
-        temp_day_of_week[1] = days_of_week[1];
-        temp_day_of_week[2] = '\0';
-
-        if(!strcmp("Tu", temp_day_of_week)) date1.tm_mday += 1;
-        else if(!strcmp("We", temp_day_of_week)) date1.tm_mday += 2;
-        else if(!strcmp("Th", temp_day_of_week)) date1.tm_mday += 3;
-        else if(!strcmp("Fr", temp_day_of_week)) date1.tm_mday += 4;    
-        switch(strlen(days_of_week)){
-            case 6:
-                i = 3;
-                break;
-            case 4:
-                i = 2;
-                break;
-            case 2:
-                i = 1;
-                break;
-        }
-        if(strlen(days_of_week)>2)
-        {
-            memmove(days_of_week, days_of_week+2, strlen(days_of_week));
-        }
-        
         int current_date = 0;
         char date_to_print_out[20];
-        while(i > 0)
+        switch(strlen(days_of_week)){
+            case 6:
+                j = 3;
+                break;
+            case 4:
+                j = 2;
+                break;
+            case 2:
+                j = 1;
+                break;
+        }
+        struct tm temp_date;
+
+  
+        temp_date = date1;
+        while(j > 0)
         {
+            temp_day_of_week[0] = days_of_week[0];
+            temp_day_of_week[1] = days_of_week[1];
+            temp_day_of_week[2] = '\0';
+            if(strcmp("Tu", temp_day_of_week) == 0) date1.tm_mday++;
+            else if(strcmp("We", temp_day_of_week) == 0) date1.tm_mday += 2;
+            else if(strcmp("Th", temp_day_of_week) == 0) date1.tm_mday += 3;
+            else if(strcmp("Fr", temp_day_of_week) == 0) date1.tm_mday += 4;    
+            memmove(days_of_week, days_of_week+2, strlen(days_of_week));
+            printf("%d\n", date1.tm_mday);
+            current_date = 0;
             while(current_date <= days)
             {
                 strftime(date_to_print_out, sizeof(date_to_print_out), "%m/%d/%Y", &date1);
@@ -369,8 +369,10 @@ int main(void)
                 fputc('\n', f_out);
             }
 
-            i--;
+            j--;
+            date1 = temp_date;
         }
+        
 
         
 
