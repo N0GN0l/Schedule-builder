@@ -77,6 +77,7 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
                     strcpy(list[top].lecture.dates.string, temp_string);
                     break;
                 case 3:
+                    // token = strtok(temp_string, "WESTCAMPUS");
                     strcpy(list[top].lecture.location.string, temp_string);
                     break;
             }
@@ -96,11 +97,6 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
         }
     }
 }
-
-
-
-
-
 void class_finder(FILE *f_in, classes* list)
 {
     int top = 0;
@@ -194,6 +190,166 @@ void class_finder(FILE *f_in, classes* list)
     }
 }
 
+void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
+{
+    String dates[2];
+    String times[2];
+    char* token;
+    char* days_of_week;
+
+    if(!lecture)
+    {
+        token = strtok(list[i].overarching_name.string, "-");
+        // token = strtok(NULL, "-"); // Subsequent calls pass NULL
+        // memmove(token, token+1, strlen(token)+1);
+        strcpy(list[i].overarching_name.string, token);
+    }
+
+    memset(dates, 0, sizeof(dates));
+    memset(times, 0, sizeof(times));
+    // ======================= Split the dates =======================
+    if(lecture)
+    {
+        token = strtok(list[i].lecture.dates.string, " -"); 
+    }
+    else{
+        token = strtok(list[i].special.dates.string, " -"); 
+    }
+    int j = 0;
+    while (token != NULL && j < 2) 
+    {
+        strcpy(dates[j].string, token);
+        j++;
+        token = strtok(NULL, "-"); // Subsequent calls pass NULL
+    }
+    
+    //=================get rid of empty spaces before the date====================
+    if (dates[1].string[0] == ' ') {
+        memmove(dates[1].string, dates[1].string + 1, strlen(dates[1].string));
+    }
+        
+    // ====================== Split the time data ========================
+    // Get the first token
+    if(lecture)
+    {
+        token = strtok(list[i].lecture.time.string, " ");
+    }
+    else {
+        token = strtok(list[i].special.time.string, " ");
+    }
+    days_of_week = token;
+
+    int k = 0;
+    while ((token = strtok(NULL, " -")) != NULL && k < 2)
+    {
+        // printf("%s\n", token);
+        strcpy(times[k].string, token);
+        k++;
+    }
+    
+    //=============calculate the number of days inbetween the starting and end dates
+    //This is used to repeatedly make events for the same class
+
+    int integer_version_of_mm = (dates[0].string[0] - '0') * 10 + (dates[0].string[1] - '0') - 1;
+    int integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
+    
+    // printf("dd: %d, mm: %d\n", integer_version_of_dd, integer_version_of_mm);
+    struct tm date1 = {0};
+    date1.tm_mon = integer_version_of_mm;
+    date1.tm_mday = integer_version_of_dd;
+    date1.tm_year = 2026-1900;
+    
+    
+    // printf("date2:%s\n",dates[1].string );
+    
+    
+    
+    integer_version_of_mm = (dates[1].string[0] - '0') * 10 + (dates[1].string[1] - '0') - 1;
+    integer_version_of_dd = (dates[1].string[3] - '0') * 10 + (dates[1].string[4] - '0');
+    struct tm date2 = {0};
+    date2.tm_mon = integer_version_of_mm;
+    date2.tm_mday = integer_version_of_dd;
+    date2.tm_year = 2026-1900;
+    
+    time_t t1 = mktime(&date1);
+    time_t t2 = mktime(&date2);
+    
+    if (t1 == (time_t)-1 || t2 == (time_t)-1) {
+        printf("Error converting date.\n");
+        exit(1);
+    }
+    
+    double seconds = difftime(t2, t1);
+    
+    double days = seconds / 86400.0;
+    
+    
+    integer_version_of_mm = (dates[0].string[0] - '0') * 10 + (dates[0].string[1] - '0') - 1;
+    integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
+    
+    char temp_day_of_week[3];
+    int current_date = 0;
+    char date_to_print_out[20];
+    switch(strlen(days_of_week)){
+        case 6:
+            j = 3;
+            break;
+        case 4:
+            j = 2;
+            break;
+        case 2:
+            j = 1;
+            break;
+    }
+    struct tm temp_date;
+
+
+    temp_date = date1;
+    while(j > 0)
+    {
+        temp_day_of_week[0] = days_of_week[0];
+        temp_day_of_week[1] = days_of_week[1];
+        temp_day_of_week[2] = '\0';
+        if(strcmp("Tu", temp_day_of_week) == 0) date1.tm_mday++;
+        else if(strcmp("We", temp_day_of_week) == 0) date1.tm_mday += 2;
+        else if(strcmp("Th", temp_day_of_week) == 0) date1.tm_mday += 3;
+        else if(strcmp("Fr", temp_day_of_week) == 0) date1.tm_mday += 4;    
+        memmove(days_of_week, days_of_week+2, strlen(days_of_week));
+        current_date = 0;
+        while(current_date <= days)
+        {
+            strftime(date_to_print_out, sizeof(date_to_print_out), "%m/%d/%Y", &date1);
+            if(lecture)
+            {
+                fprintf(f_out, "%s,", list[i].overarching_name.string);
+            }
+            else {
+                fprintf(f_out, "%s", list[i].overarching_name.string);
+                fprintf(f_out, "%s, ", list[i].special.type.string);
+            }
+            fprintf(f_out,"%s,", date_to_print_out);//start date
+            fprintf(f_out, "%s,", times[0].string);//start time
+            fprintf(f_out,"%s,", date_to_print_out);//end date
+            fprintf(f_out, "%s,", times[1].string);//end time
+            // fprintf(f_out, "FALSE,testing,");
+            if(lecture)
+            {
+                fprintf(f_out, "%s", list[i].lecture.location.string);
+            }
+            else{
+                fprintf(f_out, "%s", list[i].special.location.string);
+            }
+            date1.tm_mday += 7;
+            mktime(&date1);
+            
+            current_date+=7;
+            fputc('\n', f_out);
+        }
+
+        j--;
+        date1 = temp_date;
+    }
+}
 int main(void)
 {
     // Get the current calendar time
@@ -239,150 +395,15 @@ int main(void)
 
 
     //============= start outputting to the CSV file =================
-    fprintf(f_out, "Subject,Start Date,Start Time,End Date,End Time,All day event,Description,Location\n");
-
-
-
-    String dates[2];
-    String times[2];
-    char* token;
-    char* days_of_week;
-
-    
+    fprintf(f_out, "Subject,Start Date,Start Time,End Date,End Time,Location\n");
     for(int i = 0; i < 4; i++)
-    { 
-        memset(dates, 0, sizeof(dates));
-        memset(times, 0, sizeof(times));
-        // ======================= Split the dates =======================
-        
-        token = strtok(list[i].lecture.dates.string, " -"); 
-        int j = 0;
-        while (token != NULL && j < 2) 
+    {
+        CSV_creation(f_out, list, true,i);
+        if(list[i].has_non_lecture_section)
         {
-            strcpy(dates[j].string, token);
-            j++;
-            token = strtok(NULL, "-"); // Subsequent calls pass NULL
+            CSV_creation(f_out, list, false, i);
         }
-        
-        //=================get rid of empty spaces before the date====================
-        if (dates[1].string[0] == ' ') {
-            memmove(dates[1].string, dates[1].string + 1, strlen(dates[1].string));
-        }
-            
-        // ====================== Split the time data ========================
-        // Get the first token ("MoWe")
-        token = strtok(list[i].lecture.time.string, " ");
-        days_of_week = token;
-
-        int k = 0;
-        while ((token = strtok(NULL, " -")) != NULL && k < 2)
-        {
-            // printf("%s\n", token);
-            strcpy(times[k].string, token);
-            k++;
-        }
-        
-        //=============calculate the number of days inbetween the starting and end dates
-        //This is used to repeatedly make events for the same class
-
-        int integer_version_of_mm = (dates[0].string[0] - '0') * 10 + (dates[0].string[1] - '0') - 1;
-        int integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
-        
-        // printf("dd: %d, mm: %d\n", integer_version_of_dd, integer_version_of_mm);
-        struct tm date1 = {0};
-        date1.tm_mon = integer_version_of_mm;
-        date1.tm_mday = integer_version_of_dd;
-        date1.tm_year = 2026-1900;
-        
-        
-        // printf("date2:%s\n",dates[1].string );
-        
-        
-        
-        integer_version_of_mm = (dates[1].string[0] - '0') * 10 + (dates[1].string[1] - '0') - 1;
-        integer_version_of_dd = (dates[1].string[3] - '0') * 10 + (dates[1].string[4] - '0');
-        struct tm date2 = {0};
-        date2.tm_mon = integer_version_of_mm;
-        date2.tm_mday = integer_version_of_dd;
-        date2.tm_year = 2026-1900;
-        
-        time_t t1 = mktime(&date1);
-        time_t t2 = mktime(&date2);
-        
-        if (t1 == (time_t)-1 || t2 == (time_t)-1) {
-            printf("Error converting date.\n");
-            return 1;
-        }
-        
-        double seconds = difftime(t2, t1);
-        
-        double days = seconds / 86400.0;
-        
-        
-        integer_version_of_mm = (dates[0].string[0] - '0') * 10 + (dates[0].string[1] - '0') - 1;
-        integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
-        
-        char temp_day_of_week[3];
-        int current_date = 0;
-        char date_to_print_out[20];
-        switch(strlen(days_of_week)){
-            case 6:
-                j = 3;
-                break;
-            case 4:
-                j = 2;
-                break;
-            case 2:
-                j = 1;
-                break;
-        }
-        struct tm temp_date;
-
-  
-        temp_date = date1;
-        while(j > 0)
-        {
-            temp_day_of_week[0] = days_of_week[0];
-            temp_day_of_week[1] = days_of_week[1];
-            temp_day_of_week[2] = '\0';
-            if(strcmp("Tu", temp_day_of_week) == 0) date1.tm_mday++;
-            else if(strcmp("We", temp_day_of_week) == 0) date1.tm_mday += 2;
-            else if(strcmp("Th", temp_day_of_week) == 0) date1.tm_mday += 3;
-            else if(strcmp("Fr", temp_day_of_week) == 0) date1.tm_mday += 4;    
-            memmove(days_of_week, days_of_week+2, strlen(days_of_week));
-            printf("%d\n", date1.tm_mday);
-            current_date = 0;
-            while(current_date <= days)
-            {
-                strftime(date_to_print_out, sizeof(date_to_print_out), "%m/%d/%Y", &date1);
-                fprintf(f_out, "%s, ", list[i].overarching_name.string);
-                fprintf(f_out,"%s, ", date_to_print_out);//start date
-                fprintf(f_out, "%s, ", times[0].string);//start time
-                fprintf(f_out,"%s, ", date_to_print_out);//end date
-                fprintf(f_out, "%s,,,", times[1].string);//end time
-                fprintf(f_out, "%s", list[i].lecture.location.string);
-    
-                date1.tm_mday += 7;
-                mktime(&date1);
-                
-                current_date+=7;
-                fputc('\n', f_out);
-            }
-
-            j--;
-            date1 = temp_date;
-        }
-        
-
-        
-
-
-        
-        
-
     }
-
-
 
     fclose(f_in);
     fclose(f_out);
