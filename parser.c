@@ -67,6 +67,7 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
         temp_string[i] = '\0';
         i=0;
         ch = ' ';
+        char* token;
         if(type)
         {
             switch (searching_type) {
@@ -77,7 +78,10 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
                     strcpy(list[top].lecture.dates.string, temp_string);
                     break;
                 case 3:
-                    // token = strtok(temp_string, "WESTCAMPUS");
+                    char *target = strstr(temp_string, "WESTCAMPUS");
+                    if (target != NULL) {
+                        memmove(target, target + 10, strlen(target + 10) + 1);
+                    }    
                     strcpy(list[top].lecture.location.string, temp_string);
                     break;
             }
@@ -91,6 +95,10 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
                     strcpy(list[top].special.dates.string, temp_string);
                     break;
                 case 3:
+                    char *target = strstr(temp_string, "WESTCAMPUS");
+                    if (target != NULL) {
+                        memmove(target, target + 10, strlen(target + 10) + 1);
+                    }
                     strcpy(list[top].special.location.string, temp_string);
                     break;
             }
