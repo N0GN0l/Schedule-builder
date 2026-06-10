@@ -242,8 +242,17 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
     int k = 0;
     while ((token = strtok(NULL, " -")) != NULL && k < 2)
     {
+        int temp = 0;
         // printf("%s\n", token);
         strcpy(times[k].string, token);
+        char* ptr = times[k].string;
+        while(*ptr != '\0' && *ptr != 'M')
+        {
+            temp++;
+            ptr++;
+        }
+        memmove(&times[k].string[temp], &times[k].string[temp-1], strlen(times[k].string)-temp+1);
+        times[k].string[temp-1]=' ';
         k++;
     }
     
