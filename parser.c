@@ -361,6 +361,9 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
 }
 int main(void)
 {
+    int class_amount;
+    printf("How many classes do you have, do NOT include labs and recitations (enter as an integer number, e.g: 1-2): ");
+    scanf("%d", &class_amount);
     // Get the current calendar time
     time_t raw_time = time(NULL);
 
@@ -387,7 +390,7 @@ int main(void)
     class_finder(f_in, list);
 
     //================================Print statements to show the raw data that is stored=========================================
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < class_amount; i++)
     {
         printf("\n%s\n", list[i].overarching_name.string);
         printf("%s\n", list[i].lecture.dates.string);
@@ -405,7 +408,7 @@ int main(void)
 
     //============= start outputting to the CSV file =================
     fprintf(f_out, "Subject,Start Date,Start Time,End Date,End Time,Location\n");
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < class_amount; i++)
     {
         CSV_creation(f_out, list, true,i);
         if(list[i].has_non_lecture_section)
