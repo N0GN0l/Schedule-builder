@@ -30,7 +30,7 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
     char* id_for_location = "win0divMTG_LOC$";
     char* id_for_dates = "win0divMTG_DATES$";
     char temp_string[100];
-    char ch = ' ';
+    char* ch;
     // int offset;
     char* id;
     
@@ -51,22 +51,21 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
 
     if(strstr(buffer, id) != NULL)
     {
-        while(ch != '"')
+        ch = strrchr(buffer, '"');
+        while(*ch != '>')
         {
-            fseek(f_in, -2, SEEK_CUR);
-            ch = fgetc(f_in);
+            ch++;
         }
-        ch = fgetc(f_in);
-        while(ch != '<')
+        while(*ch != '<')
         {
-            ch = fgetc(f_in);
-            if(ch == '<') break;
-            temp_string[i] = ch;
+            ch++;
+            if(*ch == '<') break;
+            temp_string[i] = *ch;
             i++;
         }
         temp_string[i] = '\0';
         i=0;
-        ch = ' ';
+        // ch = ' ';
         char* token;
         if(type)
         {
@@ -110,14 +109,11 @@ void class_finder(FILE *f_in, classes* list)
     int top = 0;
     
     char buffer[1024];
-    char ch;
+    char* ch;
     char temp_string[50];
     
-    
-
     char* id_for_class = "<tbody><tr><td class=\"PAGROUPDIVIDER\" align=\"left\">";//this is the sequence that dictates when a class is being displayed
     char* id_for_type = "win0divMTG_COMP$";
-    
     
     bool type = false;
 
@@ -126,22 +122,21 @@ void class_finder(FILE *f_in, classes* list)
         int i = 0;
         if(strstr(buffer, id_for_class) != NULL)
         {
-            while(ch != '"')
+            ch = strrchr(buffer, '"');
+            while(*ch != '>')
             {
-                fseek(f_in, -2, SEEK_CUR);
-                ch = fgetc(f_in);
+                ch++;
             }
-            ch = fgetc(f_in);
-            while(ch != '<')
+            while(*ch != '<')
             {
-                ch = fgetc(f_in);
-                if(ch == '<') break;
-                temp_string[i] = ch;
+                ch++;
+                if(*ch == '<') break;
+                temp_string[i] = *ch;
                 i++;
             }
             temp_string[i] = '\0';
             i = 0;
-            ch = ' ';
+            // *ch = ' ';
             strcpy(list[top].overarching_name.string, temp_string);
             
             memset(temp_string, 0, sizeof(temp_string));//reset temp string
@@ -154,22 +149,21 @@ void class_finder(FILE *f_in, classes* list)
                 if(strstr(buffer, id_for_type) != NULL)
                 {
                     // printf("%s", buffer);
-                    while(ch != '"')
+                    ch = strrchr(buffer, '"');
+                    while(*ch != '>')
                     {
-                        fseek(f_in, -2, SEEK_CUR);
-                        ch = fgetc(f_in);
+                        ch++;
                     }
-                    ch = fgetc(f_in);
-                    while(ch != '<')
+                    while(*ch != '<')
                     {
-                        ch = fgetc(f_in);
-                        if(ch == '<') break;
-                        temp_string[i] = ch;
+                        ch++;
+                        if(*ch == '<') break;
+                        temp_string[i] = *ch;
                         i++;
                     }
                     temp_string[i] = '\0';
                     i=0;
-                    ch = ' ';
+                    // *ch = ' ';
                     // printf("``````````%s```````````\n", temp_string);
                     if(strcmp(temp_string,"Lecture") == 0)
                     {
@@ -384,7 +378,7 @@ int main(void)
 
     FILE* f_in, *f_out;
     classes* list = malloc(sizeof(classes) * 10);
-    if((f_in = fopen("input.txt", "r")) == NULL)
+    if((f_in = fopen("input1.txt", "r")) == NULL)
     {
         perror("Couild not open html file");
         exit(1);
