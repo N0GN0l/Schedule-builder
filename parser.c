@@ -5,7 +5,7 @@
 #include <time.h>
 
 typedef struct{
-    char string[100];
+    char string[1000];
 } String;
 
 typedef struct{
@@ -29,7 +29,7 @@ void list_filler(bool type, FILE *f_in, classes* list, int top,char buffer[], in
     char* id_for_time = "win0divMTG_SCHED$";
     char* id_for_location = "win0divMTG_LOC$";
     char* id_for_dates = "win0divMTG_DATES$";
-    char temp_string[100];
+    char temp_string[1000];
     char* ch;
     // int offset;
     char* id;
@@ -199,24 +199,35 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
     char* token;
     char* days_of_week;
 
+    char copy_of_date[1024];
+    char copy_of_time[1024];
+    char copy_of_name[1024];
+
+    strcpy(copy_of_name, list[i].overarching_name.string);
+
+    if(lecture)
+    {
+        strcpy(copy_of_date, list[i].lecture.dates.string);
+        strcpy(copy_of_time, list[i].lecture.time.string);
+    }
+    else {
+        strcpy(copy_of_date, list[i].special.dates.string);
+        strcpy(copy_of_time, list[i].special.time.string);
+    }
+
     if(!lecture)
     {
-        token = strtok(list[i].overarching_name.string, "-");
+        token = strtok(copy_of_name, "-");
         // token = strtok(NULL, "-"); // Subsequent calls pass NULL
         // memmove(token, token+1, strlen(token)+1);
-        strcpy(list[i].overarching_name.string, token);
+        strcpy(copy_of_name, token);
     }
 
     memset(dates, 0, sizeof(dates));
     memset(times, 0, sizeof(times));
     // ======================= Split the dates =======================
-    if(lecture)
-    {
-        token = strtok(list[i].lecture.dates.string, " -"); 
-    }
-    else{
-        token = strtok(list[i].special.dates.string, " -"); 
-    }
+
+    token = strtok(copy_of_date, " -"); 
     int j = 0;
     while (token != NULL && j < 2) 
     {
@@ -232,13 +243,7 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
         
     // ====================== Split the time data ========================
     // Get the first token
-    if(lecture)
-    {
-        token = strtok(list[i].lecture.time.string, " ");
-    }
-    else {
-        token = strtok(list[i].special.time.string, " ");
-    }
+    token = strtok(copy_of_time, " ");
     days_of_week = token;
 
     int k = 0;
@@ -295,22 +300,26 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
     double days = seconds / 86400.0;
     
     
-    integer_version_of_mm = (dates[0].string[0] - '0') * 10 + (dates[0].string[1] - '0') - 1;
-    integer_version_of_dd = (dates[0].string[3] - '0') * 10 + (dates[0].string[4] - '0');
+    integer_version_of_mm = atoi(&dates[0].string[0]) * 10 + atoi(&dates[0].string[1]) - 1;
+    integer_version_of_dd = atoi(&dates[0].string[3]) * 10 + atoi(&dates[0].string[4]);
     
     char temp_day_of_week[3];
     int current_date = 0;
     char date_to_print_out[20];
-    switch(strlen(days_of_week)){
-        case 6:
-            j = 3;
-            break;
-        case 4:
-            j = 2;
-            break;
-        case 2:
-            j = 1;
-            break;
+    printf("%s \n", days_of_week);
+    if(days_of_week != NULL)
+    {
+        switch(strlen(days_of_week)){
+            case 6:
+                j = 3;
+                break;
+            case 4:
+                j = 2;
+                break;
+            case 2:
+                j = 1;
+                break;
+        }
     }
     struct tm temp_date;
 
@@ -335,7 +344,7 @@ void CSV_creation(FILE* f_out, classes* list, bool lecture, int i)
                 fprintf(f_out, "%s,", list[i].overarching_name.string);
             }
             else {
-                fprintf(f_out, "%s", list[i].overarching_name.string);
+                fprintf(f_out, "%s ", list[i].overarching_name.string);
                 fprintf(f_out, "%s, ", list[i].special.type.string);
             }
             fprintf(f_out,"%s,", date_to_print_out);//start date
@@ -378,7 +387,7 @@ int main(void)
 
     FILE* f_in, *f_out;
     classes* list = malloc(sizeof(classes) * 10);
-    if((f_in = fopen("input1.txt", "r")) == NULL)
+    if((f_in = fopen("input.txt", "r")) == NULL)
     {
         perror("Couild not open html file");
         exit(1);
@@ -391,7 +400,7 @@ int main(void)
     
     class_finder(f_in, list);
 
-    //================================Print statements to show the raw data that is stored=========================================
+    // ================================Print statements to show the raw data that is stored=========================================
     for(int i = 0; i < class_amount; i++)
     {
         printf("\n%s\n", list[i].overarching_name.string);
