@@ -375,7 +375,6 @@ int main(void)
     int class_amount;
     printf("How many classes do you have, do NOT include labs and recitations (enter as an integer number, e.g: 1-2): ");
     scanf("%d", &class_amount);
-    // Get the current calendar time
     time_t raw_time = time(NULL);
 
     // Convert to local time structure
@@ -387,7 +386,7 @@ int main(void)
 
     FILE* f_in, *f_out;
     classes* list = malloc(sizeof(classes) * 10);
-    if((f_in = fopen("input.txt", "r")) == NULL)
+    if((f_in = fopen("input1.txt", "r")) == NULL)
     {
         perror("Couild not open html file");
         exit(1);
@@ -415,7 +414,6 @@ int main(void)
             printf("%s\n", list[i].special.time.string);
         }
     }
-
 
     //============= start outputting to the CSV file =================
     fprintf(f_out, "Subject,Start Date,Start Time,End Date,End Time,Location\n");
